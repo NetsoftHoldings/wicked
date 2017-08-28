@@ -2,8 +2,12 @@ module Wicked::Controller::Concerns::RenderRedirect
   extend ActiveSupport::Concern
 
 
-  def render_wizard(resource = nil, options = {}, params = {})
-    process_resource!(resource)
+  def render_wizard(resource = nil, options = {}, params = {}, &block)
+    if block_given?
+      process_resource!(resource, &block)
+    else
+      process_resource!(resource)
+    end
 
     if @skip_to
       url_params = (@wicked_redirect_params || {}).merge(params)
@@ -18,6 +22,7 @@ module Wicked::Controller::Concerns::RenderRedirect
       if resource.save
         @skip_to ||= @next_step
       else
+        yield(resource) if block_given?
         @skip_to = nil
       end
     end
